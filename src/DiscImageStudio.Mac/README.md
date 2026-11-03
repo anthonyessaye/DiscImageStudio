@@ -69,7 +69,7 @@ The script bundles the engine into the app, so nothing else needs installing to 
 | Page layout | ✅ Rendered | Pages rendered off-screen and checked by eye |
 | Clicking through the live app | ⚠️ Not yet | Dragging, file dialogs and the real title bar and sidebar need a hands-on pass |
 | Burning | ❌ Never run | No drive was available. The commands are unit tested, but nothing has been written to a disc |
-| Windows build after this work | ⚠️ Not yet | The Blu-ray preview moved to shared code, and only Windows CI can compile that |
+| Windows build after this work | ⚠️ Partly | The Blu-ray preview moved to shared code. The Windows app and its tests compile from a Mac using .NET's Windows targeting, but that skips the Windows image code, and nothing has run on Windows |
 
 ## Differences from the Windows app
 
