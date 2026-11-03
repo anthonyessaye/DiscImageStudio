@@ -45,6 +45,8 @@ Disc Image Studio 可将一张图片转换成符合 CD、DVD 与单层 BD-R 光�
 
 Windows 下载 `win-x64.exe` 后可直接运行。Linux 或 macOS 请下载与 CPU 匹配的**实验性 CLI** 压缩包，解压后运行 `./disc-image-studio --help`。这些发布包均自带 .NET 运行时。 [GitHub Releases](https://github.com/JiaFeiMiao-K-Cat/DiscImageStudio/releases)
 
+在 Mac 上，也可以构建此分支中**实验性的原生应用**。详见 [Disc Image Studio for Mac](src/DiscImageStudio.Mac/README.md)（英文，含演示视频）。
+
 ### 1. 新建工程
 
 在主页选择 CD、DVD 或蓝光，指定输出位置后创建工程。

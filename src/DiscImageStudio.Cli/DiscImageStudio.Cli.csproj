@@ -16,6 +16,7 @@
     <ProjectReference Include="../DiscImageStudio.Dvd/DiscImageStudio.Dvd.csproj" />
     <ProjectReference Include="../DiscImageStudio.BluRay/DiscImageStudio.BluRay.csproj" />
     <Compile Include="../Shared/BluRayImageLoader.cs" Link="Services/BluRayImageLoader.cs" />
+    <Compile Include="../Shared/BluRayPreviewRenderer.cs" Link="Services/BluRayPreviewRenderer.cs" />
     <Compile Include="../Shared/ConsoleModuleRunner.cs" Link="ConsoleModuleRunner.cs" />
   </ItemGroup>
 </Project>

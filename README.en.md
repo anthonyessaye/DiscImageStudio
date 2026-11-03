@@ -45,6 +45,8 @@ Disc Image Studio converts an image into data that meets the physical-layer cons
 
 On Windows, download and run `win-x64.exe`. On Linux or macOS, download the **experimental CLI** archive for your CPU, extract it and run `./disc-image-studio --help`. Each release package includes the .NET runtime. [GitHub Releases](https://github.com/JiaFeiMiao-K-Cat/DiscImageStudio/releases)
 
+On a Mac, you can also build the **experimental native app** in this fork. See [Disc Image Studio for Mac](src/DiscImageStudio.Mac/README.md), which includes a demo video.
+
 ### 1. Create a Project
 
 Choose CD, DVD, or Blu-ray on the home page, specify an output location, and create the project.

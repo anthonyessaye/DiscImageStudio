@@ -21,7 +21,9 @@ internal static class Program
 
         try
         {
-            return ConsoleModuleRunner.Run(args);
+            return GuiBridge.IsBridgeCommand(args[0])
+                ? GuiBridge.Run(args)
+                : ConsoleModuleRunner.Run(args);
         }
         catch (OperationCanceledException)
         {

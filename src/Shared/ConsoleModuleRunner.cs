@@ -38,8 +38,26 @@ internal static class ConsoleModuleRunner
 
     private sealed class ConsoleProgress : IProgress<DiscJobProgress>
     {
+        // Set by the macOS app, which reads progress as data instead of parsing log text.
+        private static readonly bool JsonProgress =
+            Environment.GetEnvironmentVariable("DISC_IMAGE_STUDIO_JSON_PROGRESS") == "1";
+
         public void Report(DiscJobProgress value)
         {
+            if (JsonProgress)
+            {
+                Console.WriteLine("@@dis-progress " + System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    moduleId = value.ModuleId,
+                    stage = value.Stage,
+                    message = value.Message,
+                    fraction = value.Fraction,
+                    completedUnits = value.CompletedUnits,
+                    totalUnits = value.TotalUnits,
+                }));
+                return;
+            }
+
             if (!string.IsNullOrWhiteSpace(value.Message)) Console.WriteLine(value.Message);
         }
     }
