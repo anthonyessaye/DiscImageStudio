@@ -105,19 +105,23 @@ final class EngineTextTests: XCTestCase {
 }
 
 final class BurnServiceTests: XCTestCase {
-    func testParsesDriveListAndIgnoresTheHeader() {
-        let output = """
-           Vendor   Product           Rev   Bus       SupportLevel
-        1  ASUS     SDRW-08D2S-U      B901  USB       Unsupported
-        2  PIONEER  BD-RW BDR-XD07    1.03  USB       Apple Shipping
-        """
-        let devices = BurnService.parseDeviceList(output)
+    /// Real `hdiutil burn -list` output, including the path's spaces and trailing tab.
+    private let driveList = """
+    TEAC DV-W28S-VT via USB (DRDeviceSupportLevelUnsupported)
+    \tIOService:/AppleARMPE/USB2.0 Hub@01100000/IODVDServices\t
+    PIONEER BD-RW BDR-XD07 via USB (DRDeviceSupportLevelFull)
+    \tIOService:/AppleARMPE/second/IODVDServices\t
+    """
+
+    func testParsesDriveList() {
+        let devices = BurnService.parseDeviceList(driveList)
         XCTAssertEqual(devices.map(\.index), [1, 2])
-        XCTAssertEqual(devices[0].vendor, "ASUS")
+        XCTAssertEqual(devices.map(\.name), ["TEAC DV-W28S-VT", "PIONEER BD-RW BDR-XD07"])
+        XCTAssertEqual(devices[0].servicePath, "IOService:/AppleARMPE/USB2.0 Hub@01100000/IODVDServices")
     }
 
     func testEmptyDriveList() {
-        XCTAssertEqual(BurnService.parseDeviceList("   Vendor   Product           Rev   Bus       SupportLevel\n"), [])
+        XCTAssertEqual(BurnService.parseDeviceList(""), [])
     }
 
     func testParsesPuppetStrings() {
@@ -125,24 +129,6 @@ final class BurnServiceTests: XCTestCase {
         XCTAssertEqual(BurnService.parseBurnLine("PERCENT:-1"), .progress(nil))
         XCTAssertEqual(BurnService.parseBurnLine("MESSAGE:Writing"), .message("Writing"))
         XCTAssertNil(BurnService.parseBurnLine("  "))
-    }
-
-    func testBurnArgumentsReflectOptions() {
-        let device = BurnDevice(index: 2, vendor: "V", product: "P")
-        let a = BurnService.burnArguments(imagePath: "/a.iso", device: device, speed: 4, verify: false, eject: false)
-        XCTAssertEqual(Array(a.prefix(2)), ["burn", "/a.iso"])
-        XCTAssertTrue(a.contains("-noverifyburn"))
-        XCTAssertTrue(a.contains("-noeject"))
-        XCTAssertEqual(a[a.firstIndex(of: "-speed")! + 1], "4")
-        XCTAssertEqual(a[a.firstIndex(of: "-device")! + 1], "2")
-        XCTAssertFalse(a.contains("-testburn"))
-    }
-
-    func testBurnNeverLetsHdiutilAlterTheImage() {
-        let a = BurnService.burnArguments(imagePath: "/a.iso", device: nil, speed: nil, verify: true, eject: true)
-        for flag in ["-noaddpmap", "-nooptimizeimage", "-noskipfinalfree", "-nosynthesize"] {
-            XCTAssertTrue(a.contains(flag), flag)
-        }
     }
 
     func testAudioBurnPutsTheFolderLast() {

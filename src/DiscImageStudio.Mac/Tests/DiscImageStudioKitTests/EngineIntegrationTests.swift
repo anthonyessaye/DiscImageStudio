@@ -118,6 +118,23 @@ final class EngineIntegrationTests: XCTestCase {
         XCTAssertEqual(preset.geometry.pitchLinear, -3.9256854319227684E-05)
     }
 
+    /// These radii only line up on a real disc at full precision, so a rounded value anywhere
+    /// between the preset file and the engine's arguments would warp the picture.
+    func testFujifilmPresetReachesTheEngineWithExactRadii() async throws {
+        let catalog = try await runner.json(DiscPresetCatalog.self, ["gui-presets", "--user-file", path("missing.json")])
+        let preset = try XCTUnwrap(catalog.presets(for: .dvd).first { $0.id == "fujifilm-dvd-r-prodisc-f02" })
+        XCTAssertEqual(preset.geometry.sectors, 2_295_104)
+        XCTAssertEqual(preset.geometry.innerRadiusMm, 23.86333)
+        XCTAssertEqual(preset.geometry.outerRadiusMm, 57.931948)
+
+        let settings = DiscJobSettings(family: .dvd, geometry: preset.geometry, tone: .photo, invertMapping: false,
+                                       outputs: ProjectOutputs(outputPath: path("disc.iso"), volumeLabel: ""))
+        let arguments = CommandBuilder.generate(settings, compositePath: path("art.png"))
+        XCTAssertEqual(arguments[arguments.firstIndex(of: "--inner-radius-mm")! + 1], "23.86333")
+        XCTAssertEqual(arguments[arguments.firstIndex(of: "--outer-radius-mm")! + 1], "57.931948")
+        XCTAssertEqual(arguments[arguments.firstIndex(of: "--total-sectors")! + 1], "2295104")
+    }
+
     // MARK: Generation and previews
 
     func testGenerateAndPreviewEveryFamilyWithTheAppsArguments() async throws {
@@ -291,6 +308,44 @@ final class EngineIntegrationTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: path("small.calibration.json")))
         let leftovers = try FileManager.default.contentsOfDirectory(atPath: directory.path).filter { $0.hasPrefix(".calibration-") }
         XCTAssertEqual(leftovers, [])
+    }
+
+    // MARK: Chirp calibration target
+
+    private struct ChirpReading: Decodable {
+        struct Guess: Decodable {
+            var innerRadiusMm: Double?
+            var outerRadiusMm: Double?
+        }
+        var confident: Bool
+        var innerRadiusMm: Double?
+        var outerRadiusMm: Double?
+        var bestGuess: Guess
+    }
+
+    /// The target exists because a wrong answer wastes a disc, so both directions matter: it
+    /// must recover a disc it has never been told about, and refuse a photo with no target.
+    func testChirpTargetRecoversAnUnknownDisc() async throws {
+        let output = path("chirp.png")
+        _ = try await runner.capture(["gui-sweep-simulate", "--actual-r0", "23.95", "--actual-r1", "57.85",
+                                      "--output", output, "--samples-per-sector", "4", "--rotation", "37"])
+        let reading = try await runner.json(ChirpReading.self, ["gui-sweep-read", "--input", output])
+        XCTAssertTrue(reading.confident)
+        XCTAssertEqual(try XCTUnwrap(reading.innerRadiusMm), 23.95, accuracy: 0.005)
+        XCTAssertEqual(try XCTUnwrap(reading.outerRadiusMm), 57.85, accuracy: 0.005)
+    }
+
+    func testChirpReaderRefusesAPhotoWithNoTarget() async throws {
+        // A real, ordinary calibration target: rings and arms, but no chirp.
+        let session = path("plain.calibration.json")
+        _ = try await runner.capture(["gui-calibration-create", "--session", session, "--family", "cd",
+                                      "--r0", "24.5", "--r1", "56.8", "--sectors", "359849"])
+        let plain = path("plain.png")
+        _ = try await runner.capture(["gui-calibration-render", "--session", session, "--output", plain, "--size", "1400"])
+        let reading = try await runner.json(ChirpReading.self, ["gui-sweep-read", "--input", plain])
+        XCTAssertFalse(reading.confident)
+        XCTAssertNil(reading.innerRadiusMm)
+        XCTAssertNil(reading.outerRadiusMm)
     }
 
     // MARK: Engine message translation

@@ -11,7 +11,8 @@ let package = Package(
         // UI-free logic (project files, running the CLI) so it can be unit tested.
         .target(
             name: "DiscImageStudioKit",
-            swiftSettings: [.swiftLanguageMode(.v5)]
+            swiftSettings: [.swiftLanguageMode(.v5)],
+            linkerSettings: [.linkedFramework("DiscRecording")]
         ),
         .executableTarget(
             name: "DiscImageStudioMac",

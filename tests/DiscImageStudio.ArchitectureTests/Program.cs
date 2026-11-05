@@ -306,6 +306,11 @@ static void TestDiscPresets()
     Equal(1.0507210681810583E-05, ritekDvdR.PitchQuadratic, "Ritek DVD-R E-Series quadratic pitch");
     Equal(-8.562064227346657E-06, ritekDvdR.PitchCubic, "Ritek DVD-R E-Series cubic pitch");
     True(ritekDvdR.Contributor == "bczhc", "Ritek DVD-R E-Series contributor is recorded");
+    DvdDiscPresetDefinition fujifilmDvdR = builtIn.DvdPresets.Single(
+        value => value.Id == "fujifilm-dvd-r-prodisc-f02");
+    Equal(2_295_104U, fujifilmDvdR.TotalSectors, "Fujifilm DVD-R ProdiscF02 sectors");
+    Equal(23.86333, fujifilmDvdR.InnerRadiusMm, "Fujifilm DVD-R ProdiscF02 inner radius");
+    Equal(57.931948, fujifilmDvdR.OuterRadiusMm, "Fujifilm DVD-R ProdiscF02 outer radius");
     BluRayDiscPresetDefinition ritekBd12x = builtIn.BluRayPresets!.Single(
         value => value.Id == "bd-r-ritek-12x");
     Equal("铼德 BD-R 12x（实测）", ritekBd12x.DisplayName, "Ritek BD-R 12x preset name");

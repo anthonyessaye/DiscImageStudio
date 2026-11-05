@@ -9,7 +9,7 @@
 > **About this demo:** a script drove the app's real pages and the real engine in an off-screen window, so it's a rendered walkthrough, not a recording of someone using the app. The generated CD track, previews and calibration result are all real. The title bar and sidebar around the pages are redrawn, because macOS can't draw its window materials off-screen. Pointer movement isn't shown.
 
 > [!WARNING]
-> This is an experimental fork feature. **Burning has never been tested on a real disc**, and the app hasn't yet had a hands-on pass in its live window. See [what's been tested](#whats-been-tested).
+> This is an experimental fork feature. **Burning has only been confirmed on DVD-R, on one drive**, and the app hasn't yet had a full hands-on pass in its live window. See [what's been tested](#whats-been-tested).
 
 Disc Image Studio started as a [Windows app by JiaFeiMiao-K-Cat](https://github.com/JiaFeiMiao-K-Cat/DiscImageStudio) with an experimental command-line version for macOS. This app puts a SwiftUI interface on that same engine, so a disc image made here comes from the same generation code as one made on Windows.
 
@@ -39,9 +39,11 @@ Every disc model differs slightly. Burn a known target, photograph the disc, tra
 
 ![The Calibration page, with a fitted curve following the traced points](docs/media/calibration.png)
 
+Some discs already have a measured template. **Fujifilm DVD-R ProdiscF02** was burned at 4x on a TEAC DV-W28S-VT and checked from photos of the real disc. Give your picture a solid background with this template, because transparent areas aren't written and the picture comes out much fainter.
+
 ### 5. Burn it
 
-The Burn page writes through macOS's own `hdiutil` and `drutil`. It starts with a laser-off test burn selected, and asks before writing anything. Read [the differences from Windows](#differences-from-the-windows-app) first.
+The Burn page writes disc images through Apple's DiscRecording framework, and CD audio through `drutil`. It starts with a laser-off test burn selected, and asks before writing anything. Read [the differences from Windows](#differences-from-the-windows-app) first.
 
 ## Get started
 
@@ -68,12 +70,12 @@ The script bundles the engine into the app, so nothing else needs installing to 
 | Cancelling | ✅ Tested | A real Blu-ray job stops promptly and leaves no finished-looking file |
 | Page layout | ✅ Rendered | Pages rendered off-screen and checked by eye |
 | Clicking through the live app | ⚠️ Not yet | Dragging, file dialogs and the real title bar and sidebar need a hands-on pass |
-| Burning | ❌ Never run | No drive was available. The commands are unit tested, but nothing has been written to a disc |
+| Burning | ⚠️ DVD-R only | Picture-only DVD-Rs burned at 4x on a TEAC DV-W28S-VT with **Verify** off, since its check can report a false failure. CD and Blu-ray burning are untested |
 | Windows build after this work | ⚠️ Partly | The Blu-ray preview moved to shared code. The Windows app and its tests compile from a Mac using .NET's Windows targeting, but that skips the Windows image code, and nothing has run on Windows |
 
 ## Differences from the Windows app
 
-- **Burning:** Windows controls the burner directly through IMAPI2, and this app can't. Images are written to a file first, so a Blu-ray needs about 25 GB free. CD data images aren't written disc-at-once, so sectors at the end of the disc may be lost. On audio discs macOS adds its own track gap and the drive can't be chosen, so the picture may not line up.
+- **Burning:** Windows controls the burner through IMAPI2, and this app uses DiscRecording, so results may differ. Images are written to a file first, so a Blu-ray needs about 25 GB free. Images are written disc-at-once from the file's exact bytes, because `hdiutil burn` refuses picture-only images or replaces them with a new filesystem. On audio discs macOS adds its own track gap and the drive can't be chosen, so the picture may not line up.
 - **Language:** the interface is English only, where Windows also has Chinese, Japanese and Turkish.
 - **Layer compositing:** this is a Core Graphics rewrite of the Windows composer. Placement follows the same rules, but image scaling isn't pixel-identical.
 

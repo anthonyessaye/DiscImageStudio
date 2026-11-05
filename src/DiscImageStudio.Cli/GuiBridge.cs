@@ -15,7 +15,7 @@ namespace DiscImageStudio.Cli;
 /// process and the disc modules don't expose. Each writes one JSON document to stdout and
 /// reports failure the usual way (message on stderr, non-zero exit). They stay out of the
 /// module catalog and --help because they are an app interface, not a user-facing one.</summary>
-internal static class GuiBridge
+internal static partial class GuiBridge
 {
     private const string Prefix = "gui-";
     private const double PhysicalHoleRadiusMm = 7.5;
@@ -55,6 +55,9 @@ internal static class GuiBridge
                 "gui-bd-preview" => BluRayPreview(options, cancellation.Token),
                 "gui-dvd-tone-preview" => DvdTonePreviewCommand(options, cancellation.Token),
                 "gui-artifact-info" => ArtifactInfo(options),
+                "gui-sweep-generate" => SweepGenerate(options, cancellation.Token),
+                "gui-sweep-simulate" => SweepSimulate(options, cancellation.Token),
+                "gui-sweep-read" => SweepRead(options, cancellation.Token),
                 "gui-preset-save" => PresetSave(options),
                 "gui-preview-overlay" => PreviewOverlay(options, cancellation.Token),
                 "gui-calibration-create" => CalibrationCreate(options, cancellation.Token),
@@ -693,9 +696,10 @@ internal static class GuiBridge
         if (!fit.Transform.IsValidForDisc(canvasRadius))
             throw new ArgumentException("The photo transform degenerates inside the canvas. Adjust the outline points.");
         BgraRaster source = RasterCodec.LoadBgra32(options.Require("input"));
-        byte[] pixels = Rectify(source, fit.Transform.DiscToSourceMatrix9, canvasRadius, RectifiedPhotoSize, token);
+        int pixelSize = options.Int("size", RectifiedPhotoSize);
+        byte[] pixels = Rectify(source, fit.Transform.DiscToSourceMatrix9, canvasRadius, pixelSize, token);
         string output = Path.GetFullPath(options.Require("output"));
-        RasterCodec.SavePng(output, RectifiedPhotoSize, RectifiedPhotoSize, pixels, grayscale: false);
+        RasterCodec.SavePng(output, pixelSize, pixelSize, pixels, grayscale: false);
         return new
         {
             succeeded = true,
@@ -704,7 +708,7 @@ internal static class GuiBridge
             holeRmsPixels = fit.HoleRmsPixels,
             output,
             canvasRadiusMm = canvasRadius,
-            pixelSize = RectifiedPhotoSize,
+            pixelSize,
         };
     }
 

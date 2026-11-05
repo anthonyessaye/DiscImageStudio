@@ -28,10 +28,14 @@ final class BurnModel: ObservableObject {
         let speed = speed, verify = verify, eject = eject, testBurn = testBurn
         do {
             let title = "\(testBurn ? "Test burning" : "Burning") \(URL(fileURLWithPath: path).lastPathComponent)…"
-            try await app.runBurn(title: title) {
-                isAudio
-                    ? try BurnService.burnAudio(wavPath: path, speed: speed, testBurn: testBurn)
-                    : try BurnService.burn(imagePath: path, device: device, speed: speed, verify: verify, eject: eject, testBurn: testBurn)
+            if isAudio {
+                try await app.runBurn(title: title) {
+                    try BurnService.burnAudio(wavPath: path, speed: speed, testBurn: testBurn)
+                }
+            } else {
+                try await app.runImageBurn(title: title) {
+                    try DiscBurner.burn(imagePath: path, device: device, speed: speed, verify: verify, eject: eject, testBurn: testBurn)
+                }
             }
             app.appendLog(testBurn ? "Test burn finished. The disc wasn't written." : "Burn finished. Check the result on the real disc.")
         } catch {
@@ -41,7 +45,28 @@ final class BurnModel: ObservableObject {
 }
 
 extension AppModel {
-    /// Like runJob, but reads hdiutil's progress lines instead of the engine's.
+    /// Writes a disc image through DiscRecording, showing its progress in the job dock.
+    func runImageBurn(title: String, start: () throws -> DiscBurnJob) async throws {
+        guard job == nil else {
+            throw CLIFailure(message: "Another job is still running.", exitCode: -1, wasCancelled: false)
+        }
+        let running = try start()
+        job = ActiveJob(title: title, fraction: nil, detail: "", cancel: { running.cancel() })
+        appendLog(title)
+        defer { job = nil }
+        for await event in running.events {
+            switch event {
+            case .progress(let fraction):
+                job?.fraction = fraction
+            case .message(let message):
+                appendLog(message)
+                job?.detail = message
+            }
+        }
+        try await running.wait()
+    }
+
+    /// Like runJob, but reads drutil's output instead of the engine's.
     func runBurn(title: String, start: () throws -> CLIJob) async throws {
         guard job == nil else {
             throw CLIFailure(message: "Another job is still running.", exitCode: -1, wasCancelled: false)
@@ -93,7 +118,7 @@ struct BurnView: View {
                 Label {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Experimental, and not verified on a real disc").font(.callout.weight(.semibold))
-                        Text("The Windows app controls the burner directly, and this page uses macOS's own hdiutil and drutil, so the result may not match. A CD data image may lose sectors at the end of the disc, because macOS doesn't write it the disc-at-once way Windows does. Use spare media, and start with a test burn.")
+                        Text("This page writes images through macOS's DiscRecording framework and CD audio through drutil, where the Windows app controls the burner directly, so the result may not match. Use spare media, and start with a test burn.")
                             .font(.caption)
                             .fixedSize(horizontal: false, vertical: true)
                     }

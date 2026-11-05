@@ -149,6 +149,15 @@
       "contributor": "bczhc"
     },
     {
+      "id": "fujifilm-dvd-r-prodisc-f02",
+      "displayName": "富士 DVD-R ProdiscF02（实测）",
+      "description": "富士 DVD-R（介质 ID ProdiscF02）实测参数：23.86333–57.931948 mm，共 2,295,104 个扇区。图片请使用不透明背景，透明区域不会写入。",
+      "totalSectors": 2295104,
+      "innerRadiusMm": 23.86333,
+      "outerRadiusMm": 57.931948,
+      "channelBitLengthNm": 133.3
+    },
+    {
       "id": "dvd-5-80mm",
       "displayName": "标准 8cm 单层 DVD",
       "description": "ISO/IEC 16448 标准单层 80 mm DVD 数据区：24–38 mm，共 714,544 个扇区。",

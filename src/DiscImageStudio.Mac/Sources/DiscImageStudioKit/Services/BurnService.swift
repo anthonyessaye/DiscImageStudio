@@ -2,11 +2,17 @@ import Foundation
 
 public struct BurnDevice: Identifiable, Equatable, Sendable {
     public var index: Int
-    public var vendor: String
-    public var product: String
+    public var name: String
+    /// The drive's IOService path, which is how `DiscBurner` finds it again.
+    public var servicePath: String
 
     public var id: Int { index }
-    public var name: String { "\(vendor) \(product)".trimmingCharacters(in: .whitespaces) }
+
+    public init(index: Int, name: String, servicePath: String) {
+        self.index = index
+        self.name = name
+        self.servicePath = servicePath
+    }
 }
 
 public enum BurnEvent: Equatable, Sendable {
@@ -14,24 +20,31 @@ public enum BurnEvent: Equatable, Sendable {
     case message(String)
 }
 
-/// Burns through macOS's own tools. The Windows app streams through IMAPI2 and has a
-/// disc-at-once path that keeps every sector, and neither exists here, so these results are
-/// not known to be equivalent. The Burn page says so.
+/// Finds burners, and writes CD audio through drutil. Disc images go through `DiscBurner`.
+/// The Windows app uses IMAPI2 instead, so results are not known to be equivalent, and the
+/// Burn page says so.
 public enum BurnService {
-    /// Parses `drutil list`: a header row, then rows that start with a device number.
+    /// Parses `hdiutil burn -list`: each drive is a name line, then an indented IOService path.
     public static func parseDeviceList(_ output: String) -> [BurnDevice] {
-        output.split(separator: "\n").compactMap { line in
-            let parts = line.split(whereSeparator: \.isWhitespace).map(String.init)
-            guard parts.count >= 3, let index = Int(parts[0]) else { return nil }
-            // Columns after the product name are Rev, Bus and SupportLevel.
-            let product = parts.count > 5 ? parts[2..<(parts.count - 3)].joined(separator: " ") : parts[2]
-            return BurnDevice(index: index, vendor: parts[1], product: product)
+        var devices: [BurnDevice] = []
+        var pendingName: String?
+        for line in output.split(separator: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("IOService:") {
+                guard let name = pendingName else { continue }
+                devices.append(BurnDevice(index: devices.count + 1, name: name, servicePath: trimmed))
+                pendingName = nil
+            } else if !trimmed.isEmpty {
+                // "TEAC DV-W28S-VT via USB (DRDeviceSupportLevelUnsupported)"
+                pendingName = trimmed.components(separatedBy: " via ").first ?? trimmed
+            }
         }
+        return devices
     }
 
     public static func listDevices() async -> [BurnDevice] {
-        let runner = CLIRunner(executableURL: URL(fileURLWithPath: "/usr/bin/drutil"))
-        guard let output = try? await runner.capture(["list"]) else { return [] }
+        let runner = CLIRunner(executableURL: URL(fileURLWithPath: "/usr/bin/hdiutil"))
+        guard let output = try? await runner.capture(["burn", "-list"]) else { return [] }
         return parseDeviceList(output)
     }
 
@@ -49,22 +62,6 @@ public enum BurnService {
         return .message(trimmed)
     }
 
-    /// Every option that could alter the image is turned off: the picture only exists if the
-    /// exact bytes reach the disc, and by default hdiutil may add a partition map, optimize
-    /// the image, or synthesize a new filesystem.
-    public static func burnArguments(imagePath: String, device: BurnDevice?, speed: Int?, verify: Bool, eject: Bool, testBurn: Bool = false) -> [String] {
-        var arguments = [
-            "burn", imagePath, "-puppetstrings",
-            "-noaddpmap", "-nooptimizeimage", "-noskipfinalfree", "-nosynthesize",
-        ]
-        if let device { arguments += ["-device", String(device.index)] }
-        if let speed { arguments += ["-speed", String(speed)] }
-        if testBurn { arguments.append("-testburn") }
-        if !verify { arguments.append("-noverifyburn") }
-        if !eject { arguments.append("-noeject") }
-        return arguments
-    }
-
     /// A CD audio track goes through drutil, which reads the WAV header and so can't get the
     /// byte order wrong. It takes a folder, so the track is linked into a temporary one.
     public static func audioBurnArguments(folder: String, speed: Int?, testBurn: Bool) -> [String] {
@@ -73,11 +70,6 @@ public enum BurnService {
         if testBurn { arguments.append("-test") }
         arguments.append(folder)
         return arguments
-    }
-
-    public static func burn(imagePath: String, device: BurnDevice?, speed: Int?, verify: Bool, eject: Bool, testBurn: Bool) throws -> CLIJob {
-        try CLIRunner(executableURL: URL(fileURLWithPath: "/usr/bin/hdiutil"))
-            .start(burnArguments(imagePath: imagePath, device: device, speed: speed, verify: verify, eject: eject, testBurn: testBurn))
     }
 
     public static func burnAudio(wavPath: String, speed: Int?, testBurn: Bool) throws -> CLIJob {

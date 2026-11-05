@@ -999,6 +999,20 @@
     "ja": "ISO/IEC 30190 標準単層 BD-R データ領域: 24–58 mm、12,219,392 セクター。",
     "tr": "ISO/IEC 30190 standart tek katmanlı BD-R veri alanı: 24–58 mm, 12.219.392 sektör."
   },
+  "富士 DVD-R ProdiscF02（实测）": {
+    "zh-CN": "富士 DVD-R ProdiscF02（实测）",
+    "en": "Fujifilm DVD-R ProdiscF02 (measured)",
+    "zh-TW": "富士 DVD-R ProdiscF02（實測）",
+    "ja": "富士フイルム DVD-R ProdiscF02 (実測)",
+    "tr": "Fujifilm DVD-R ProdiscF02 (ölçülen)"
+  },
+  "富士 DVD-R（介质 ID ProdiscF02）实测参数：23.86333–57.931948 mm，共 2,295,104 个扇区。图片请使用不透明背景，透明区域不会写入。": {
+    "zh-CN": "富士 DVD-R（介质 ID ProdiscF02）实测参数：23.86333–57.931948 mm，共 2,295,104 个扇区。图片请使用不透明背景，透明区域不会写入。",
+    "en": "Fujifilm DVD-R (media ID ProdiscF02), measured: 23.86333–57.931948 mm, 2,295,104 sectors. Give your picture a solid background, because transparent areas aren't written.",
+    "zh-TW": "富士 DVD-R（媒體 ID ProdiscF02）實測參數：23.86333–57.931948 mm，共 2,295,104 個磁區。圖片請使用不透明背景，透明區域不會寫入。",
+    "ja": "富士フイルム DVD-R (メディア ID ProdiscF02) の実測パラメーター: 23.86333–57.931948 mm、2,295,104 セクター。透明な領域は書き込まれないため、画像には不透明な背景を使用してください。",
+    "tr": "Fujifilm DVD-R (ortam kimliği ProdiscF02), ölçülen: 23,86333–57,931948 mm, 2.295.104 sektör. Saydam alanlar yazılmadığından resminizde opak bir arka plan kullanın."
+  },
   "铼德 BD-R 10x（实测）": {
     "zh-CN": "铼德 BD-R 10x（实测）",
     "en": "Ritek BD-R 10x (measured)",
